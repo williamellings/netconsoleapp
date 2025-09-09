@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   pr-check:
-    name: Build & (optional) Test
+    name: Build & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -23,15 +23,14 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore netconsoleapp.sln
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build netconsoleapp.sln --configuration Release --no-restore
 
-      # Kör tester bara om det finns test-projekt
       - name: Test
         if: |
           hashFiles('**/*Tests*.csproj') != '' ||
           hashFiles('**/*.Tests.csproj') != '' ||
           hashFiles('**/Tests/*.csproj') != ''
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet test netconsoleapp.sln --configuration Release --no-build --verbosity normal
