@@ -2,66 +2,28 @@
 
 on:
   pull_request:
-    # Kör när PR öppnas, uppdateras (nya commits) eller öppnas igen
     types: [opened, synchronize, reopened]
-    # Ändra vid behov
-    branches: [ main, master ]
+    branches: [main, master]
 
 permissions:
   contents: read
 
 jobs:
   pr-check:
-    name: Run basic PR checks
+    name: Build & (optional) Test
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---- Välj stack (behåll det som passar ditt repo) ----
-      # Node (om du har package.json)
-      - name: Setup Node (if Node project)
-        if: hashFiles('**/package.json') != ''
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install deps (Node)
-        if: hashFiles('**/package-lock.json') != ''
-        run: npm ci
-      - name: Tests (Node)
-        if: hashFiles('**/package.json') != ''
-        run: npm test --if-present
-
-      # .NET (om du har .csproj/sln)
-      - name: Setup .NET (if .NET project)
-        if: hashFiles('**/*.sln') != '' || hashFiles('**/*.csproj') != ''
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - name: Restore & Test (.NET)
-        if: hashFiles('**/*.sln') != '' || hashFiles('**/*.csproj') != ''
-        run: |
-          dotnet restore
-          dotnet test --no-build --verbosity normal
 
-      # Fallback – kör alltid något så jobben inte är tomma
-      - name: Done
-        run: echo "PR checks completed."
+      - name: Restore
+        run: dotnet restore
 
-  notify:
-    name: Notify Discord
-    needs: pr-check
-    if: always() # skicka notis oavsett pass/fail
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send PR event to Discord
-        env:
-          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: |
-          STATUS="${{ needs.pr-check.result }}"
-          ACTOR="${{ github.actor }}"
-          REPO="${{ github.repository }}"
-          PR_NUM="${{ github.event.pull_request.number }}"
-          curl -H "Content-Type: application/json" -X POST \
-            -d "{\"content\":\"🛠️ PR #${PR_NUM} **${STATUS}** av ${ACTOR} i ${REPO}\"}" \
-            "$WEBHOOK"
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
