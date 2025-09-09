@@ -23,10 +23,10 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore netconsoleapp.sln
+        run: dotnet restore netconsoleappovning.sln
 
       - name: Build
-        run: dotnet build netconsoleapp.sln --configuration Release --no-restore
+        run: dotnet build netconsoleappovning.sln --configuration Release --no-restore
 
       - name: Test
         if: |
