@@ -7,14 +7,51 @@ on:
   workflow_dispatch:
 
 jobs:
-  pr-check:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-      - name: Restore
-        run: dotnet restore netconsoleappovning.sln
-      - name: Build
-        run: dotnet build netconsoleappovning.sln --configuration Release --no-restore
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      # Hitta en .sln (eller annars .csproj) automatiskt
+      - name: Detect solution or project
+        shell: pwsh
+        run: |
+          $sln = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.sln | Select-Object -First 1
+          if ($sln) {
+            "BUILD_FILE=$($sln.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "BUILD_KIND=SLN" | Out-File -FilePath $env:GITHUB_ENV -Append
+            Write-Host "Found solution: $($sln.FullName)"
+          } else {
+            $proj = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.csproj | Select-Object -First 1
+            if (-not $proj) {
+              Write-Error "Hittade varken .sln eller .csproj i repot."
+              exit 1
+            }
+            "BUILD_FILE=$($proj.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "BUILD_KIND=CSPROJ" | Out-File -FilePath $env:GITHUB_ENV -Append
+            Write-Host "Found project: $($proj.FullName)"
+          }
+
+      # NuGet restore (fungerar för .NET Framework-lösningar/projekt)
+      - name: NuGet Restore
+        shell: pwsh
+        run: |
+          if ($env:BUILD_KIND -eq "SLN") {
+            nuget restore "$env:BUILD_FILE"
+          } else {
+            nuget restore "$env:BUILD_FILE"
+          }
+
+      # Bygg i Release med MSBuild
+      - name: Build (Release)
+        shell: pwsh
+        run: |
+          msbuild "$env:BUILD_FILE" -p:Configuration=Release -m
