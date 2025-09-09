@@ -1,9 +1,10 @@
-name: PR Check
+﻿name: PR Check
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main, master]
+  workflow_dispatch:   # 👈 gör att du kan köra den manuellt
 
 permissions:
   contents: read
@@ -34,3 +35,5 @@ jobs:
           hashFiles('**/*.Tests.csproj') != '' ||
           hashFiles('**/Tests/*.csproj') != ''
         run: dotnet test netconsoleappovning.sln --configuration Release --no-build --verbosity normal
+
+
