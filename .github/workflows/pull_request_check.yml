@@ -8,21 +8,13 @@ on:
 
 jobs:
   pr-check:
-    runs-on: windows-latest
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v2
-
-      # 👉 Byt till rätt sln-namn om det är annorlunda
-      - name: NuGet Restore
-        run: nuget restore netconsoleappovning.sln
-
-      - name: Build (Release)
-        run: msbuild netconsoleappovning.sln -p:Configuration=Release
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore netconsoleappovning.sln
+      - name: Build
+        run: dotnet build netconsoleappovning.sln --configuration Release --no-restore
