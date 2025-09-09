@@ -33,4 +33,4 @@ jobs:
           hashFiles('**/*Tests*.csproj') != '' ||
           hashFiles('**/*.Tests.csproj') != '' ||
           hashFiles('**/Tests/*.csproj') != ''
-        run: dotnet test netconsoleapp.sln --configuration Release --no-build --verbosity normal
+        run: dotnet test netconsoleappovning.sln --configuration Release --no-build --verbosity normal
