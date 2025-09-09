@@ -9,7 +9,6 @@ namespace netconsoleappövning
     internal class Program
     {
         static void Main(string[] args)
-            writeline("Hello World!");
         {
         }
     }
