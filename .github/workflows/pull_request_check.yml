@@ -17,3 +17,17 @@ jobs:
           dotnet-version: 8.0.x
       - name: Build
         run: dotnet build --configuration Release
+
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: build
+    if: always() # ensures notify runs even if build fails
+    steps:
+      - name: Send Discord Notification
+        run: |
+          STATUS=${{ needs.build.result }}
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\": \":bell: PR Build finished with status: **$STATUS**\"}" \
+               https://discord.com/api/webhooks/1414125419610771466/Xkb9ADuwivDV3vwW0fl-pjpA_bSoq7GRFHfhTucFBAsoAx7TFNW7XPGArLLQESICpfvL
