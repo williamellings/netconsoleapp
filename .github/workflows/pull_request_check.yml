@@ -27,3 +27,11 @@ jobs:
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
+
+      # Kör tester bara om det finns test-projekt
+      - name: Test
+        if: |
+          hashFiles('**/*Tests*.csproj') != '' ||
+          hashFiles('**/*.Tests.csproj') != '' ||
+          hashFiles('**/Tests/*.csproj') != ''
+        run: dotnet test --configuration Release --no-build --verbosity normal
