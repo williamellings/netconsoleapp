@@ -4,31 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main, master]
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
-  notify_push_main:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send Discord on push
-        uses: rjstone/discord-webhook-notify@v2
-        with:
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
-          username: "Willes bot"
-          avatarUrl: "https://img.favpng.com/17/1/5/manchester-united-logo-png-png-favpng-6R3Xfm9rg1NsU8naJahynJsyD.jpg"
-          text: "Jag signa inte upp för att bli willes bot"
-          title: "#underbetaldbot"
-          description: |
-            📦 Repo: ${{ github.repository }}
-            Av: **${{ github.actor }}**
-            Commit: `${{ github.sha }}`
-          color: "#2ecc71"
-
-  build_pr:
-    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+  build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,3 +17,35 @@ jobs:
           dotnet-version: 8.0.x
       - name: Build
         run: dotnet build --configuration Release
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: build
+    # Kör alltid, även om builden failar
+    if: always()
+    env:
+      WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}   # <-- lägg in din Discord-webhook som secret i repo
+      STATUS: ${{ needs.build.result }}         # success | failure | cancelled | skipped
+    steps:
+      - name: Send Discord Notification
+        run: |
+          # Bygg ett JSON-payload och posta till Discord-webhooken
+          payload=$(cat <<'JSON'
+          {
+            "username": "Willes bot",
+            "avatar_url": "https://img.favpng.com/17/1/5/manchester-united-logo-png-png-favpng-6R3Xfm9rg1NsU8naJahynJsyD.jpg",
+            "content": ":bell: Jag signa inte upp till att vara willes bot men iallafall hans PR build klar med status: **STATUS_PLACEHOLDER**\n📦 Repo: REPO_PLACEHOLDER\n👤 Av: **ACTOR_PLACEHOLDER**"
+          }
+          JSON
+          )
+
+          # Ersätt placeholders med riktiga värden
+          payload="${payload/STATUS_PLACEHOLDER/${STATUS}}"
+          payload="${payload/REPO_PLACEHOLDER/${GITHUB_REPOSITORY}}"
+          payload="${payload/ACTOR_PLACEHOLDER/${GITHUB_ACTOR}}"
+
+          # Skicka
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "$payload" \
+               "$WEBHOOK"
