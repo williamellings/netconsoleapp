@@ -1,33 +1,23 @@
-﻿name: PR Check
+﻿﻿name: Notify Discord
 
 on:
+  push:
+    branches: [ "main" ]
   pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main, master]
-  workflow_dispatch:
+    types: [opened, closed]
 
 jobs:
-  build:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-      - name: Build
-        run: dotnet build --configuration Release
-
-
-  notify:
+  push_notify:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    needs: build
-    if: always() # ensures notify runs even if build fails
     steps:
-      - name: Send Discord Notification
-        run: |
-          STATUS=${{ needs.build.result }}
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"content\": \":bell: PR Build finished with status: **$STATUS**\"}" \
-               https://discord.com/api/webhooks/1414125419610771466/Xkb9ADuwivDV3vwW0fl-pjpA_bSoq7GRFHfhTucFBAsoAx7TFNW7XPGArLLQESICpfvL
+      - name: Send Discord on push
+        uses: rjstone/discord-webhook-notify@v2
+        with:
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+          username: "Willes bot"
+          avatarUrl: "https://img.favpng.com/17/1/5/manchester-united-logo-png-png-favpng-6R3Xfm9rg1NsU8naJahynJsyD.jpg"
+          text: "Jag vill inte va willes bot"
+          title: "Push till main"
+          description: "📦 Repo: ${{ github.repository }}\nAv: **${{ github.actor }}**\nCommit: `${{ github.sha }}`"
+          color: "#2ecc71"
