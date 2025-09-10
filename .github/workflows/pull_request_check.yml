@@ -6,7 +6,7 @@ on:
     types: [opened, synchronize, reopened]
     branches: [main, master]
   push:
-    branches: [main]   # <-- lägg till push-trigger
+    branches: [main]
 
 jobs:
   build:
