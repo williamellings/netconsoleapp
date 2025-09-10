@@ -1,17 +1,29 @@
-﻿﻿name: Notify Discord
+﻿name: PR Check
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
-    types: [opened, closed]
+    types: [opened, synchronize, reopened]
+    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
-  push_notify:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build
+        run: dotnet build --configuration Release
+
+
+   notify_push_main:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - name: Send Discord on push
+      - name: Push to main
         uses: rjstone/discord-webhook-notify@v2
         with:
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
@@ -19,5 +31,8 @@ jobs:
           avatarUrl: "https://img.favpng.com/17/1/5/manchester-united-logo-png-png-favpng-6R3Xfm9rg1NsU8naJahynJsyD.jpg"
           text: "Jag vill inte va willes bot"
           title: "Push till main"
-          description: "📦 Repo: ${{ github.repository }}\nAv: **${{ github.actor }}**\nCommit: `${{ github.sha }}`"
+          description: |
+            📦 Repo: ${{ github.repository }}
+            Av: **${{ github.actor }}**
+            Commit: `${{ github.sha }}`
           color: "#2ecc71"
