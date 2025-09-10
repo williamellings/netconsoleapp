@@ -16,7 +16,7 @@ on:
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
           username: "Willes bot"
           avatarUrl: "https://img.favpng.com/17/1/5/manchester-united-logo-png-png-favpng-6R3Xfm9rg1NsU8naJahynJsyD.jpg"
-          text: "Jag vill inte va willes bot"
+          text: "Jag signa inte upp för att bli willes bot"
           title: "Push till main"
           description: |
             📦 Repo: ${{ github.repository }}
